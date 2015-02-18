@@ -159,7 +159,7 @@ function MicrobeEditorHudSystem:update(renderTime, logicTime)
         end
     elseif Engine.keyboard:wasKeyPressed(Keyboard.KC_F2) then
         playClicked()
-    elseif Engine.keyboard:wasKeyPressed(Keyboard.KC_F12) then
+    elseif Engine.keyboard:wasKeyPressed(Keyboard.KC_RETURN) then
         self:updateMicrobeName()
     end
 
