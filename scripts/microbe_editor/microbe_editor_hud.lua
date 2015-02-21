@@ -82,9 +82,15 @@ function MicrobeEditorHudSystem:activate()
             button:enable()
         end
     end 
-    if seperateEitor==true then
+    --If accessed from the main menu.
+    if seperateEitor then
+    root:getChild("FinishButton"):disable()
+    self.helpPanel:setText("Welcome to The Microbe Editor! \n Since You have accessed this from the Main menu, you have unlimited Mutation Points! \n Have fun, build what you want.")
+    for typeName,button in pairs(global_activeMicrobeEditorHudSystem.organelleButtons) do
+        button:enable()
+        end
+    end 
     end
-end
 
 function MicrobeEditorHudSystem:setActiveAction(actionName)
     self.editor:setActiveAction(actionName)
@@ -189,7 +195,11 @@ end
 
 function MicrobeEditorHudSystem:updateMutationPoints() 
     --self.mpProgressBar:progressbarSetProgress(self.editor.mutationPoints/100)
+    if seperateEditor then
     self.mpLabel:setText("" .. self.editor.mutationPoints)
+    else
+    self.mpLabel:setText("Infinite")
+    end
 end
 
 -----------------------------------------------------------------

@@ -6,10 +6,8 @@ local function setupBackground()
 	--The background will be different when accessed from main menu for now.
     if seperateEditor then
     skyplane.properties.materialName = "background/red_01"
-    print("accessed from main menu!")
     else
     skyplane.properties.materialName = "background/blue_01"
-    print("accessed from game!")
     end
     skyplane.properties.tiling = 500
     skyplane.properties:touch()
