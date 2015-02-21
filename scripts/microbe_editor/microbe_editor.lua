@@ -315,7 +315,7 @@ function MicrobeEditor:createNewMicrobe()
                 local q, r = decodeAxial(position)
                 self.currentMicrobe:addOrganelle(q, r, Organelle.loadOrganelle(storage))
             end
-            -- no need to add the nucleus manually - it's alreary included in the organelleStorage
+            -- no need to add the nucleus manually - it's already included in the organelleStorage
             self.mutationPoints = previousMP
             self.organelleCount = previousOrganelleCount
             Engine:playerData():setActiveCreature(self.currentMicrobe.entity.id, GameState.MICROBE_EDITOR)

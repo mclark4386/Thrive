@@ -44,12 +44,14 @@ end
 function mainMenuMicrobeStageButtonClicked()
     local guiSoundEntity = Entity("gui_sounds")
     guiSoundEntity:getComponent(SoundSourceComponent.TYPE_ID):playSound("button-hover-click")
+	seperateEditor=false;
     Engine:setCurrentGameState(GameState.MICROBE)
 end
 
 function mainMenuMicrobeEditorButtonClicked()
     local guiSoundEntity = Entity("gui_sounds")
     guiSoundEntity:getComponent(SoundSourceComponent.TYPE_ID):playSound("button-hover-click")
+	seperateEditor=true;
     Engine:setCurrentGameState(GameState.MICROBE_EDITOR)
 end
 

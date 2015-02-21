@@ -81,7 +81,9 @@ function MicrobeEditorHudSystem:activate()
         else
             button:enable()
         end
-    end    
+    end 
+    if seperateEitor==true then
+    end
 end
 
 function MicrobeEditorHudSystem:setActiveAction(actionName)
