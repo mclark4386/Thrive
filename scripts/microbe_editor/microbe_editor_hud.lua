@@ -33,13 +33,13 @@ function MicrobeEditorHudSystem:init(gameState)
         function() global_activeMicrobeEditorHudSystem:nameClicked() end)
     -- self.mpProgressBar = root:getChild("BottomSection"):getChild("MutationPoints"):getChild("MPBar")
     self.organelleScrollPane = root:getChild("scrollablepane");
-    local finishButton = root:getChild("FinishButton")
     local nucleusButton = root:getChild("NewMicrobe")
     local flageliumButton = root:getChild("scrollablepane"):getChild("AddFlagellum")
     local mitochondriaButton = root:getChild("scrollablepane"):getChild("AddMitochondria")
     local vacuoleButton = root:getChild("scrollablepane"):getChild("AddVacuole")
     local toxinButton = root:getChild("scrollablepane"):getChild("AddToxinVacuole")
     local chloroplastButton = root:getChild("scrollablepane"):getChild("AddChloroplast")
+    self.finishButton = root:getChild("FinishButton")
     self.organelleButtons["nucleus"] = nucleusButton
     self.organelleButtons["flagelium"] = flageliumButton
     self.organelleButtons["mitochondrion"] = mitochondriaButton
@@ -85,7 +85,7 @@ function MicrobeEditorHudSystem:activate()
     end 
     --If accessed from the main menu.
     if seperateEitor then
-    finishButton:disable()
+    self.finishButton:disable()
     for typeName,button in pairs(global_activeMicrobeEditorHudSystem.organelleButtons) do
         button:enable()
         end
@@ -198,7 +198,7 @@ function MicrobeEditorHudSystem:updateMutationPoints()
     if seperateEditor then
     --since this activates every frame, it is a great place to set the mutation points.
     self.editor.mutationPoints = 9999
-    self.mpLabel:setText("#Inf")
+    self.mpLabel:setText("Inf")
     else
     self.mpLabel:setText("" .. self.editor.mutationPoints)
     end
