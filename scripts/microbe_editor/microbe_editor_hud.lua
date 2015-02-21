@@ -33,6 +33,7 @@ function MicrobeEditorHudSystem:init(gameState)
         function() global_activeMicrobeEditorHudSystem:nameClicked() end)
     -- self.mpProgressBar = root:getChild("BottomSection"):getChild("MutationPoints"):getChild("MPBar")
     self.organelleScrollPane = root:getChild("scrollablepane");
+    local finishButton = root:getChild("FinishButton")
     local nucleusButton = root:getChild("NewMicrobe")
     local flageliumButton = root:getChild("scrollablepane"):getChild("AddFlagellum")
     local mitochondriaButton = root:getChild("scrollablepane"):getChild("AddMitochondria")
@@ -84,8 +85,7 @@ function MicrobeEditorHudSystem:activate()
     end 
     --If accessed from the main menu.
     if seperateEitor then
-    root:getChild("FinishButton"):disable()
-    self.helpPanel:setText("Welcome to The Microbe Editor! \n Since You have accessed this from the Main menu, you have unlimited Mutation Points! \n Have fun, build what you want.")
+    finishButton:disable()
     for typeName,button in pairs(global_activeMicrobeEditorHudSystem.organelleButtons) do
         button:enable()
         end
@@ -196,9 +196,11 @@ end
 function MicrobeEditorHudSystem:updateMutationPoints() 
     --self.mpProgressBar:progressbarSetProgress(self.editor.mutationPoints/100)
     if seperateEditor then
-    self.mpLabel:setText("" .. self.editor.mutationPoints)
+    --since this activates every frame, it is a great place to set the mutation points.
+    self.editor.mutationPoints = 9999
+    self.mpLabel:setText("#Inf")
     else
-    self.mpLabel:setText("Infinite")
+    self.mpLabel:setText("" .. self.editor.mutationPoints)
     end
 end
 
