@@ -84,7 +84,7 @@ function MicrobeEditorHudSystem:activate()
         end
     end 
     --If accessed from the main menu.
-    if seperateEitor then
+    if seperateEditor then
     self.finishButton:disable()
     for typeName,button in pairs(global_activeMicrobeEditorHudSystem.organelleButtons) do
         button:enable()
