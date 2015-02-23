@@ -3,15 +3,11 @@ local function setupBackground()
     local entity = Entity("background")
     local skyplane = SkyPlaneComponent()
     skyplane.properties.plane.normal = Vector3(0, 0, 2000)
-	--The background will be different when accessed from main menu for now.
-    if seperateEditor then
-    skyplane.properties.materialName = "background/red_01"
-    else
     skyplane.properties.materialName = "background/blue_01"
-    end
     skyplane.properties.tiling = 500
     skyplane.properties:touch()
     entity:addComponent(skyplane)
+	microbe_skyplane=skyplane
     -- Create floating arrow entity
     entity = Entity("directionarrow")
     local sceneNode = OgreSceneNodeComponent()

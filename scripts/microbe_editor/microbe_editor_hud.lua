@@ -76,21 +76,32 @@ end
 function MicrobeEditorHudSystem:activate()
     global_activeMicrobeEditorHudSystem = self -- Global reference for event handlers
     self.editor:activate()
+    --If accessed from the main menu.
+    if seperateEditor then
+        setupFreeEditor()
+    else
+        setupRealEditor()
+    end
+end
+	
+function setupFreeEditor()
+    self.helpPanel:setText("Welcome to the Microbe Editor!\nThis is FreeBuild Mode\nLoad up a microbe and twiddle to your hearts content\nOr make one from scratch.\nWhat will you create?")
+    self.finishButton:disable()
+    for typeName,button in pairs(global_activeMicrobeEditorHudSystem.organelleButtons) do
+        button:enable()
+        end
+end 
+
+function setupRealEditor()
     for typeName,button in pairs(global_activeMicrobeEditorHudSystem.organelleButtons) do
         if Engine:playerData():lockedMap():isLocked(typeName) then
             button:disable()
         else
             button:enable()
         end
-    end 
-    --If accessed from the main menu.
-    if seperateEditor then
-    self.finishButton:disable()
-    for typeName,button in pairs(global_activeMicrobeEditorHudSystem.organelleButtons) do
-        button:enable()
-        end
-    end 
-    end
+    self.finishButton:enable()
+    self.helpPanel:setText("Welcome to the Microbe Editor!\nHere you have a chance to mutate your species, getting better adapted to your surroundings.\nEvolution happens progressively, so we limit you to a budget of 100 'Mutation Points' every time you evolve.\nModify your species by attaching organelles, selected on the right, to your cell.\nClick on the top-left to change the name of your species.")
+end
 
 function MicrobeEditorHudSystem:setActiveAction(actionName)
     self.editor:setActiveAction(actionName)
@@ -167,7 +178,7 @@ function MicrobeEditorHudSystem:update(renderTime, logicTime)
         end
     elseif Engine.keyboard:wasKeyPressed(Keyboard.KC_F2) then
         playClicked()
-    elseif Engine.keyboard:wasKeyPressed(Keyboard.KC_RETURN) then
+    elseif Engine.keyboard:wasKeyPressed(Keyboard.KC_N) then
         self:updateMicrobeName()
     end
 
