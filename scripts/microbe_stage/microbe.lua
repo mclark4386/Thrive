@@ -812,16 +812,20 @@ function Microbe:update(logicTime)
             end
             self.microbe.compoundCollectionTimer = self.microbe.compoundCollectionTimer - EXCESS_COMPOUND_COLLECTION_INTERVAL
             
-            -- If we were but are no longer being engulfed
-            if self.wasEngulfed and not self.isEngulfed then
-                 microbe2Comp.movementFactor = microbe2Comp.movementFactor * ENGULFED_MOVEMENT_DIVISION
-                self.wasEngulfed = false
-            end
+           
+            
         end
         -- Other organelles
         for _, organelle in pairs(self.microbe.organelles) do
             organelle:update(self, logicTime)
         end
+        -- If we were but are no longer being engulfed
+        if self.microbe.wasEngulfed and not self.microbe.isEngulfed then
+             self.microbe.movementFactor = self.microbe.movementFactor * ENGULFED_MOVEMENT_DIVISION
+            self.microbe.wasEngulfed = false
+        end
+        -- Used to detect when engulfing stops
+        self.microbe.isEngulfed = false;
     else
         self.microbe.deathTimer = self.microbe.deathTimer - logicTime
         if self.microbe.deathTimer <= 0 then
@@ -976,8 +980,6 @@ function MicrobeSystem:update(renderTime, logicTime)
     self.entities:clearChanges()
     for _, microbe in pairs(self.microbes) do
         microbe:update(logicTime)
-        -- Used to detect when engulfing stops
-        microbe.isEngulfed = false;
     end
     -- Note that this triggers every frame there is a collision, but the sound system ensures that the sound doesn't overlap itself. Could potentially be optimised
     for collision in self.microbeCollisions:collisions() do
@@ -994,25 +996,16 @@ function MicrobeSystem:update(renderTime, logicTime)
                     local soundComponent = entity1:getComponent(SoundSourceComponent.TYPE_ID)
                     soundComponent:playSound("microbe-collision")
                 end
-                
-                
-                -- For now I'm not really considering the case of both absorbing eachother
                 if microbe1Comp.engulfMode and microbe1Comp.maxHitpoints > microbe2Comp.maxHitpoints and not microbe2Comp.wasEngulfed then
                     microbe2Comp.movementFactor = microbe2Comp.movementFactor / ENGULFED_MOVEMENT_DIVISION
-                    --body1:addCollisionFlag(RigidBodyComponent.COL_EATER)
-                    --body2:addCollisionFlag(RigidBodyComponent.COL_EATEN)
-                    print("CALL 1")
                      microbe1Comp.isEngulfing = true
                      microbe2Comp.isEngulfed = true
                      microbe2Comp.wasEngulfed = true
-                     body1:disableCollisionsWith(collision.entityId2)
-                     print("TEEEST")
-                     
+                     body1:disableCollisionsWith(collision.entityId2)                     
                 end
                 if microbe2Comp.engulfMode and microbe2Comp.maxHitpoints > microbe1Comp.maxHitpoints and not microbe1Comp.wasEngulfed then
-                    microbe1Comp.movementFactor = microbe2Comp.movementFactor / ENGULFED_MOVEMENT_DIVISION
+                    microbe1Comp.movementFactor = microbe1Comp.movementFactor / ENGULFED_MOVEMENT_DIVISION
                     microbe2Comp.isEngulfing = true
-                      print("CALL 2")
                      microbe1Comp.isEngulfed = true
                      microbe1Comp.wasEngulfed = true
                      body2:disableCollisionsWith(collision.entityId1)

@@ -425,12 +425,6 @@ RigidBodyInputSystem::update(int, int logicTime) {
             }
             rigidBodyComponent->m_pushbackEntity = NULL_ENTITY;
         }
-        if (rigidBodyComponent->m_shouldReenableAllCollisions) {
-            //As implemented right now there can be only one nocollideentity
-            m_impl->m_activeConstraints.erase(value.first);
-            m_impl->m_activeConstraintOtherEntity.erase(value.first);
-            rigidBodyComponent->m_shouldReenableAllCollisions = false;
-        }
         if (rigidBodyComponent->m_entityToNoCollide != NULL_ENTITY)
         {
             btRigidBody* otherbody =  m_impl->m_bodies[rigidBodyComponent->m_entityToNoCollide].get();
@@ -438,8 +432,6 @@ RigidBodyInputSystem::update(int, int logicTime) {
             if (body and otherbody and
                 (m_impl->m_activeConstraintOtherEntity.find(value.first) == m_impl->m_activeConstraintOtherEntity.end() or
                 m_impl->m_activeConstraintOtherEntity[value.first] != rigidBodyComponent->m_entityToNoCollide)) {
-
-                std::cout << "main call" << std::endl;
                 m_impl->m_activeConstraints.insert( std::pair<EntityId, std::unique_ptr<btTypedConstraint>>
                         (value.first, std::unique_ptr<btTypedConstraint>(new DummyConstraint(otherbody, body))));
                 m_impl->m_activeConstraintOtherEntity.insert( std::pair<EntityId,EntityId>(value.first, rigidBodyComponent->m_entityToNoCollide));
@@ -447,6 +439,12 @@ RigidBodyInputSystem::update(int, int logicTime) {
                 body->addConstraintRef( m_impl->m_activeConstraints[value.first].get());
             }
             rigidBodyComponent->m_entityToNoCollide  = NULL_ENTITY;
+        }
+        if (rigidBodyComponent->m_shouldReenableAllCollisions) {
+            //As implemented right now there can be only one nocollideentity
+            m_impl->m_activeConstraints.erase(value.first);
+            m_impl->m_activeConstraintOtherEntity.erase(value.first);
+            rigidBodyComponent->m_shouldReenableAllCollisions = false;
         }
         body->applyDamping(logicTime / 1000.0f);
     }
