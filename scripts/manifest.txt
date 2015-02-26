@@ -4,6 +4,8 @@ globals.lua
 quick_save.lua
 util.lua
 
+keymap.lua
+
 main_menu
 microbe_stage
 microbe_editor
