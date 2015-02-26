@@ -65,9 +65,6 @@ function MicrobeEditor:update(renderTime, logicTime)
         if organelle.flashDuration ~= nil then
             organelle.flashDuration = nil
             organelle._colour = organelle._originalColour
-            organelle._needsColourUpdate = true
-        end
-        if organelle._needsColourUpdate then
             organelle:_updateHexColours()
         end
     end

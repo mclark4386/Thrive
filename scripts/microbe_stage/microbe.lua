@@ -7,17 +7,18 @@
 class 'MicrobeComponent' (Component)
 
 COMPOUND_PROCESS_DISTRIBUTION_INTERVAL = 100 -- quantity of physics time between each loop distributing compounds to organelles. TODO: Modify to reflect microbe size.
-BANDWIDTH_PER_ORGANELLE = 0.5 -- amount the microbes maxmimum bandwidth increases with per organelle added. This is a temporary replacement for microbe surface area
-BANDWIDTH_REFILL_DURATION = 1000 -- The amount of time it takes for the microbe to regenerate an amount of bandwidth equal to maxBandwidth
+BANDWIDTH_PER_ORGANELLE = 1.0 -- amount the microbes maxmimum bandwidth increases with per organelle added. This is a temporary replacement for microbe surface area
+BANDWIDTH_REFILL_DURATION = 800 -- The amount of time it takes for the microbe to regenerate an amount of bandwidth equal to maxBandwidth
 STORAGE_EJECTION_THRESHHOLD = 0.8
 EXCESS_COMPOUND_COLLECTION_INTERVAL = 1000 -- The amount of time between each loop to maintaining a fill level below STORAGE_EJECTION_THRESHHOLD and eject useless compounds
 MICROBE_HITPOINTS_PER_ORGANELLE = 10
 MINIMUM_AGENT_EMISSION_AMOUNT = 1
 REPRODUCTASE_TO_SPLIT = 5
 RELATIVE_VELOCITY_TO_BUMP_SOUND = 6
-INITIAL_EMISSION_RADIUS = 2
+INITIAL_EMISSION_RADIUS = 0.5
 ENGULFING_MOVEMENT_DIVISION = 3
 ENGULFED_MOVEMENT_DIVISION = 8
+ENGULFING_ATP_COST_SECOND = 1
 
 function MicrobeComponent:__init(isPlayerMicrobe)
     Component.__init(self)
@@ -45,9 +46,10 @@ function MicrobeComponent:__init(isPlayerMicrobe)
     self.maxBandwidth = 0
     self.remainingBandwidth = 0
     self.compoundCollectionTimer = EXCESS_COMPOUND_COLLECTION_INTERVAL
-    self.isEngulfing = false
-    self.isEngulfed = false
-    self.wasEngulfed = false
+    self.isCurrentlyEngulfing = false
+    self.isBeingEngulfed = false
+    self.wasBeingEngulfed = false
+    self.hostileEngulfer = nil
 end
 
 function MicrobeComponent:_resetCompoundPriorities()
@@ -304,7 +306,6 @@ function Microbe:__init(entity)
     end
     self:_updateCompoundAbsorber()
     self.playerAlreadyShownAtpDamage = false
-    self.playerAlreadyShownVictory = false
 end
 
 
@@ -695,13 +696,15 @@ function Microbe:kill()
     self.microbe.deathTimer = 5000
     self.microbe.movementDirection = Vector3(0,0,0)
     self.rigidBody:clearForces()
-    microbeSceneNode.visible = false
-    if self.microbe.isPlayerMicrobe  ~= true then
-        if not self.playerAlreadyShownVictory then
-            self.playerAlreadyShownVictory = true
-            showMessage("VICTORY!!!")
+    if not self.microbe.isPlayerMicrobe then
+        for _, organelle in pairs(self.microbe.organelles) do
+           organelle:removePhysics()
         end
     end
+    if self.microbe.hostileEngulfer then
+        self.microbe.hostileEngulfer.microbe.isCurrentlyEngulfing = false;
+    end
+    microbeSceneNode.visible = false
 end
 
 -- Copies this microbe. The new microbe will not have the stored compounds of this one. 
@@ -723,15 +726,17 @@ end
 
 -- Disables or enabled engulfmode for a microbe, allowing or disallowed it to absorb other microbes
 function Microbe:toggleEngulfMode()
+    colourToSet = ColourValue.Black
     if self.microbe.engulfMode then
-        
-        print("disabliong engul")
         self.microbe.movementFactor = self.microbe.movementFactor * ENGULFING_MOVEMENT_DIVISION
         
         self.rigidBody:reenableAllCollisions()
     else
-    print("enbalbing engul")
+        colourToSet = ColourValue.Red
         self.microbe.movementFactor = self.microbe.movementFactor / ENGULFING_MOVEMENT_DIVISION
+    end
+    for _, organelle in pairs(self.microbe.organelles) do
+        organelle:setExternalEdgeColour(colourToSet)
     end
     self.microbe.engulfMode = not self.microbe.engulfMode
 end
@@ -811,21 +816,29 @@ function Microbe:update(logicTime)
                 self:reproduce()
             end
             self.microbe.compoundCollectionTimer = self.microbe.compoundCollectionTimer - EXCESS_COMPOUND_COLLECTION_INTERVAL
-            
-           
-            
         end
         -- Other organelles
         for _, organelle in pairs(self.microbe.organelles) do
             organelle:update(self, logicTime)
         end
-        -- If we were but are no longer being engulfed
-        if self.microbe.wasEngulfed and not self.microbe.isEngulfed then
-             self.microbe.movementFactor = self.microbe.movementFactor * ENGULFED_MOVEMENT_DIVISION
-            self.microbe.wasEngulfed = false
+        if self.microbe.engulfMode then
+            -- Drain atp and if we run out then disable engulfmode
+            local cost = ENGULFING_ATP_COST_SECOND/1000*logicTime
+            if self:takeCompound(CompoundRegistry.getCompoundId("atp"), cost) < cost then
+                self:toggleEngulfMode()
+            end
+        end
+        if self.microbe.isBeingEngulfed then
+            self:damage(logicTime * 0.0005  * self.microbe.maxHitpoints) -- Engulfment damages 5% per second
+        -- Else If we were but are no longer, being engulfed
+        elseif self.microbe.wasBeingEngulfed then
+            self.microbe.movementFactor = self.microbe.movementFactor * ENGULFED_MOVEMENT_DIVISION
+            self.microbe.wasBeingEngulfed = false
+            self.microbe.hostileEngulfer.microbe.isCurrentlyEngulfing = false;
+            self.microbe.hostileEngulfer.rigidBody:reenableAllCollisions()
         end
         -- Used to detect when engulfing stops
-        self.microbe.isEngulfed = false;
+        self.microbe.isBeingEngulfed = false;
     else
         self.microbe.deathTimer = self.microbe.deathTimer - logicTime
         if self.microbe.deathTimer <= 0 then
@@ -992,23 +1005,29 @@ function MicrobeSystem:update(renderTime, logicTime)
             local microbe1Comp = entity1:getComponent(MicrobeComponent.TYPE_ID)
             local microbe2Comp = entity2:getComponent(MicrobeComponent.TYPE_ID)
             if body1~=nil and body2~=nil then
+                -- Play bump sound
                 if ((body1.dynamicProperties.linearVelocity - body2.dynamicProperties.linearVelocity):length()) > RELATIVE_VELOCITY_TO_BUMP_SOUND then
                     local soundComponent = entity1:getComponent(SoundSourceComponent.TYPE_ID)
                     soundComponent:playSound("microbe-collision")
                 end
-                if microbe1Comp.engulfMode and microbe1Comp.maxHitpoints > microbe2Comp.maxHitpoints and not microbe2Comp.wasEngulfed then
+                -- Engulf initiation
+                if microbe1Comp.engulfMode and microbe1Comp.maxHitpoints > microbe2Comp.maxHitpoints 
+                           and not microbe2Comp.wasBeingEngulfed and not microbe1Comp.isCurrentlyEngulfing then
                     microbe2Comp.movementFactor = microbe2Comp.movementFactor / ENGULFED_MOVEMENT_DIVISION
-                     microbe1Comp.isEngulfing = true
-                     microbe2Comp.isEngulfed = true
-                     microbe2Comp.wasEngulfed = true
-                     body1:disableCollisionsWith(collision.entityId2)                     
+                    microbe1Comp.isCurrentlyEngulfing = true
+                    microbe2Comp.isBeingEngulfed = true
+                    microbe2Comp.wasBeingEngulfed = true
+                    microbe2Comp.hostileEngulfer = Microbe(entity1)
+                    body1:disableCollisionsWith(collision.entityId2)     
                 end
-                if microbe2Comp.engulfMode and microbe2Comp.maxHitpoints > microbe1Comp.maxHitpoints and not microbe1Comp.wasEngulfed then
+                if microbe2Comp.engulfMode and microbe2Comp.maxHitpoints > microbe1Comp.maxHitpoints
+                           and not microbe1Comp.wasBeingEngulfed and not microbe2Comp.isCurrentlyEngulfing then
                     microbe1Comp.movementFactor = microbe1Comp.movementFactor / ENGULFED_MOVEMENT_DIVISION
-                    microbe2Comp.isEngulfing = true
-                     microbe1Comp.isEngulfed = true
-                     microbe1Comp.wasEngulfed = true
-                     body2:disableCollisionsWith(collision.entityId1)
+                    microbe2Comp.isCurrentlyEngulfing = true
+                    microbe1Comp.isBeingEngulfed = true
+                    microbe1Comp.wasBeingEngulfed = true
+                    microbe1Comp.hostileEngulfer = Microbe(entity2)
+                    body2:disableCollisionsWith(collision.entityId1)
                 end
             end
         end
