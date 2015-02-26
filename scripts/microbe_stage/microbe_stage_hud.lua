@@ -23,6 +23,9 @@ function HudSystem:activate()
     self.helpOpen = false
     self.menuOpen = true
     self:updateLoadButton();
+    --showing help panel to keep things consistent.
+    Engine:pauseGame()
+    self.rootGUIWindow:getChild("HelpPanel"):show()
 end
 
 function HudSystem:init(gameState)

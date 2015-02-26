@@ -85,11 +85,15 @@ function MicrobeEditorHudSystem:activate()
 end
 	
 function setupFreeEditor()
-    self.helpPanel:setText("Welcome to the Microbe Editor!\nThis is FreeBuild Mode\nLoad up a microbe and twiddle to your hearts content\nOr make one from scratch.\nWhat will you create?")
-    self.finishButton:disable()
     for typeName,button in pairs(global_activeMicrobeEditorHudSystem.organelleButtons) do
         button:enable()
         end
+    self.helpPanel:setText("Welcome to the Microbe Editor!\nThis is FreeBuild Mode\nLoad up a microbe and twiddle to your hearts content\nOr make one from scratch.\nWhat will you create?")
+    self.finishButton:disable()
+    self.helpPanel:show()
+    self.helpPanelOpen = not self.helpPanelOpen
+    self.editor.mutationPoints = 9999
+    self.mpLabel:setText("Inf")
 end 
 
 function setupRealEditor()
@@ -101,6 +105,8 @@ function setupRealEditor()
         end
     self.finishButton:enable()
     self.helpPanel:setText("Welcome to the Microbe Editor!\nHere you have a chance to mutate your species, getting better adapted to your surroundings.\nEvolution happens progressively, so we limit you to a budget of 100 'Mutation Points' every time you evolve.\nModify your species by attaching organelles, selected on the right, to your cell.\nClick on the top-left to change the name of your species.")
+    self.helpPanel:show()
+    self.helpPanelOpen = not self.helpPanelOpen
 end
 
 function MicrobeEditorHudSystem:setActiveAction(actionName)
@@ -207,9 +213,7 @@ end
 function MicrobeEditorHudSystem:updateMutationPoints() 
     --self.mpProgressBar:progressbarSetProgress(self.editor.mutationPoints/100)
     if seperateEditor then
-    --since this activates every frame, it is a great place to set the mutation points.
     self.editor.mutationPoints = 9999
-    self.mpLabel:setText("Inf")
     else
     self.mpLabel:setText("" .. self.editor.mutationPoints)
     end
