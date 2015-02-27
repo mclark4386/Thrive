@@ -78,13 +78,14 @@ function MicrobeEditorHudSystem:activate()
     self.editor:activate()
     --If accessed from the main menu.
     if seperateEditor then
-        setupFreeEditor()
+        setupFreeEditor(self)
     else
-        setupRealEditor()
+        setupRealEditor(self)
     end
 end
 	
-function setupFreeEditor()
+function setupFreeEditor(ref)
+    self=ref
     for typeName,button in pairs(global_activeMicrobeEditorHudSystem.organelleButtons) do
         button:enable()
         end
@@ -96,7 +97,8 @@ function setupFreeEditor()
     self.mpLabel:setText("Inf")
 end 
 
-function setupRealEditor()
+function setupRealEditor(ref)
+    self=ref
     for typeName,button in pairs(global_activeMicrobeEditorHudSystem.organelleButtons) do
         if Engine:playerData():lockedMap():isLocked(typeName) then
             button:disable()
