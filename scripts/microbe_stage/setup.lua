@@ -282,12 +282,17 @@ local function createSpawnSystem()
     local microbeToxinPredator = function(pos)
         return microbeSpawnFunctionGeneric(pos, "ToxinPredator", true, nil)
     end
+    
     local microbeNoper = function(pos)
         return microbeSpawnFunctionGeneric(pos, "Noper", true, nil)
     end
 
     local microbeAlgae = function(pos)
         return microbeSpawnFunctionGeneric(pos, "Algae", true, nil)
+    end
+    
+    local microbeGlutony = function(pos)
+        return microbeSpawnFunctionGeneric(pos, "Glutony", true, nil)
     end
 
     local toxinOrganelleSpawnFunction = function(pos) 
@@ -330,11 +335,12 @@ local function createSpawnSystem()
     spawnSystem:addSpawnType(spawnAmmoniaEmitter, 1/1250, 30)
     spawnSystem:addSpawnType(microbeDefault, 1/12000, 40)
     spawnSystem:addSpawnType(microbeTeeny, 1/6000, 40)
-    spawnSystem:addSpawnType(microbePlankton, 1/32000, 40)
+    spawnSystem:addSpawnType(microbePlankton, 1/10000, 40)
     spawnSystem:addSpawnType(microbePoisonous, 1/32000, 40)
-    spawnSystem:addSpawnType(microbeToxinPredator, 1/15000, 40)
+   spawnSystem:addSpawnType(microbeToxinPredator, 1/7000, 40)
     spawnSystem:addSpawnType(microbeNoper, 1/6000, 40)
     spawnSystem:addSpawnType(microbeAlgae, 1/3000, 40)
+    spawnSystem:addSpawnType(microbeGlutony, 1/17000, 40)
     spawnSystem:addSpawnType(toxinOrganelleSpawnFunction, 1/17000, 30)
     return spawnSystem
 end

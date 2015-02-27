@@ -219,7 +219,7 @@ struct RigidBodyInputSystem::Implementation {
     btDiscreteDynamicsWorld* m_world = nullptr;
 
     //Map links the dominating entity to a shared constraint
-    std::map<EntityId, std::unique_ptr<btTypedConstraint>> m_activeConstraints;
+    std::map<EntityId, btTypedConstraint*> m_activeConstraints;
     std::map<EntityId, EntityId> m_activeConstraintOtherEntity;
 };
 
@@ -275,13 +275,13 @@ struct DummyConstraint : public btTypedConstraint {
 
 public:
     DummyConstraint(btRigidBody* body1, btRigidBody* body2)
-        : btTypedConstraint(static_cast<btTypedConstraintType>(-1), *body1, *body2)
+        : btTypedConstraint(btTypedConstraintType::D6_CONSTRAINT_TYPE, *body1, *body2) //static_cast<btTypedConstraintType>(0xFF), *body1, *body2)
     {}
 
-	void getInfo1 (btConstraintInfo1* ){}
+	void getInfo1 (btConstraintInfo1* info ){info->m_numConstraintRows = 0; info->nub = 0;}
 	void getInfo2 (btConstraintInfo2* ){}
 	void	setParam(int , btScalar , int) {}
-    btScalar getParam(int, int ) const {return 0.0;}
+    btScalar getParam(int, int ) const {return 1.0;}
 
 };
 
@@ -289,16 +289,19 @@ void
 RigidBodyInputSystem::update(int, int logicTime) {
     for (EntityId entityId : m_impl->m_entities.removedEntities()) {
         btRigidBody* body = m_impl->m_bodies[entityId].get();
+        auto it = m_impl->m_activeConstraints.find(entityId);
+        if (it != m_impl->m_activeConstraints.end()) {
+            btRigidBody* otherbody =  m_impl->m_bodies[m_impl->m_activeConstraintOtherEntity[entityId]].get();
+            body->removeConstraintRef(it->second);
+            otherbody->removeConstraintRef(it->second);
+            delete it->second;
+            m_impl->m_activeConstraints.erase(it);
+            m_impl->m_activeConstraintOtherEntity.erase(entityId);
+        }
         if (body) {
             m_impl->m_world->removeRigidBody(body);
         }
         m_impl->m_bodies.erase(entityId);
-        auto it = m_impl->m_activeConstraints.find(entityId);
-        if (it != m_impl->m_activeConstraints.end()) {
-            //body->removeConstraintRef(it->second);
-            m_impl->m_activeConstraints.erase(it);
-            m_impl->m_activeConstraintOtherEntity.erase(entityId);
-        }
     }
     for (const auto& added : m_impl->m_entities.addedEntities()) {
         EntityId entityId = added.first;
@@ -427,8 +430,17 @@ RigidBodyInputSystem::update(int, int logicTime) {
         }
         if (rigidBodyComponent->m_shouldReenableAllCollisions) {
             //As implemented right now there can be only one nocollideentity
-            m_impl->m_activeConstraints.erase(value.first);
-            m_impl->m_activeConstraintOtherEntity.erase(value.first);
+            if (m_impl->m_activeConstraints.find(value.first) != m_impl->m_activeConstraints.end()) {
+                btRigidBody* otherbody =  m_impl->m_bodies[m_impl->m_activeConstraintOtherEntity[value.first]].get();
+                body->removeConstraintRef(m_impl->m_activeConstraints[value.first]);
+
+                if (otherbody) {
+                    otherbody->removeConstraintRef(m_impl->m_activeConstraints[value.first]);
+                }
+                delete m_impl->m_activeConstraints[value.first];
+                m_impl->m_activeConstraints.erase(value.first);
+                m_impl->m_activeConstraintOtherEntity.erase(value.first);
+            }
             rigidBodyComponent->m_shouldReenableAllCollisions = false;
         }
         if (rigidBodyComponent->m_entityToNoCollide != NULL_ENTITY)
@@ -436,11 +448,11 @@ RigidBodyInputSystem::update(int, int logicTime) {
             btRigidBody* otherbody =  m_impl->m_bodies[rigidBodyComponent->m_entityToNoCollide].get();
             //If both entities exist and we aren't activating a collision with the same entity again
             if (otherbody ) {
-                m_impl->m_activeConstraints.insert( std::pair<EntityId, std::unique_ptr<btTypedConstraint>>
-                        (value.first, std::unique_ptr<btTypedConstraint>(new DummyConstraint(otherbody, body))));
+                btTypedConstraint* constraint = new DummyConstraint(otherbody, body);
+                m_impl->m_activeConstraints.insert( std::pair<EntityId, btTypedConstraint*>(value.first, constraint));
                 m_impl->m_activeConstraintOtherEntity.insert( std::pair<EntityId,EntityId>(value.first, rigidBodyComponent->m_entityToNoCollide));
-                otherbody->addConstraintRef( m_impl->m_activeConstraints[value.first].get());
-                body->addConstraintRef( m_impl->m_activeConstraints[value.first].get());
+                otherbody->addConstraintRef(constraint);
+                body->addConstraintRef(constraint);
             }
             rigidBodyComponent->m_entityToNoCollide  = NULL_ENTITY;
         }

@@ -551,7 +551,7 @@ function Microbe:emitAgent(compoundId, maxAmount)
         agentVacuole:takeCompound(compoundId, amountToEject)
         local i
         for i = 1, particleCount do
-            self:ejectCompound(compoundId, amountToEject/particleCount, angle,angle)
+            self:ejectCompound(compoundId, amountToEject/particleCount, angle,angle, INITIAL_EMISSION_RADIUS*4)
         end
     end
 end
@@ -641,7 +641,7 @@ end
 --
 -- @param maxAngle
 -- Relative angle to the microbe. 0 = microbes front. Should be between 0 and 359 and higher or equal than minAngle
-function Microbe:ejectCompound(compoundId, amount, minAngle, maxAngle)
+function Microbe:ejectCompound(compoundId, amount, minAngle, maxAngle, radius)
     local chosenAngle = rng:getReal(minAngle, maxAngle)
     -- Find the direction the microbe is facing
     local yAxis = self.sceneNode.transform.orientation:yAxis()
@@ -652,9 +652,12 @@ function Microbe:ejectCompound(compoundId, amount, minAngle, maxAngle)
     microbeAngle = microbeAngle * 180/math.pi
     -- Take the mirobe angle into account so we get world relative degrees
     local finalAngle = (chosenAngle + microbeAngle) % 360
+    local _radius = INITIAL_EMISSION_RADIUS
+    if radius then
+        _radius = radius
+    end
     -- Find how far away we should spawn the particle so it doesn't collide with microbe.
-    local radius = INITIAL_EMISSION_RADIUS
-    self.compoundEmitter:emitCompound(compoundId, amount, finalAngle, radius)
+    self.compoundEmitter:emitCompound(compoundId, amount, finalAngle, _radius)
     self.microbe:_updateCompoundPriorities()
 end
 
@@ -811,7 +814,8 @@ function Microbe:update(logicTime)
                 self:damage(EXCESS_COMPOUND_COLLECTION_INTERVAL * 0.00002  * self.microbe.maxHitpoints) -- Microbe takes 2% of max hp per second in damage
             end
             -- Split microbe if it has enough reproductase
-            if self.microbe.compounds[CompoundRegistry.getCompoundId("reproductase")] ~= nil and self.microbe.compounds[CompoundRegistry.getCompoundId("reproductase")] > REPRODUCTASE_TO_SPLIT then
+            if self.microbe.compounds[CompoundRegistry.getCompoundId("reproductase")] ~= nil 
+                    and self.microbe.compounds[CompoundRegistry.getCompoundId("reproductase")] > REPRODUCTASE_TO_SPLIT and not self.microbe.engulfMode then
                 self:takeCompound(CompoundRegistry.getCompoundId("reproductase"), 5)
                 self:reproduce()
             end
@@ -824,8 +828,8 @@ function Microbe:update(logicTime)
         if self.microbe.engulfMode then
             -- Drain atp and if we run out then disable engulfmode
             local cost = ENGULFING_ATP_COST_SECOND/1000*logicTime
-            if self:takeCompound(CompoundRegistry.getCompoundId("atp"), cost) < cost then
-                self:toggleEngulfMode()
+            if self:takeCompound(CompoundRegistry.getCompoundId("atp"), -cost) < cost then
+               -- self:toggleEngulfMode()
             end
         end
         if self.microbe.isBeingEngulfed then

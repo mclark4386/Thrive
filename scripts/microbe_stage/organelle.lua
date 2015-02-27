@@ -96,7 +96,8 @@ function Organelle:load(storage)
     self.position.r = storage:get("r", 0)
     self._colour = storage:get("colour", ColourValue.White)
     self._internalEdgeColour = storage:get("internalEdgeColour", ColourValue.Grey)
-    self._externalEdgeColour = storage:get("externalEdgeColour", ColourValue.Black)
+    --Serializing these causes some minor issues and doesn't serve a purpose anyway
+    --self._externalEdgeColour = storage:get("externalEdgeColour", ColourValue.Black)
 end
 
 
@@ -185,7 +186,8 @@ function Organelle:storage()
     storage:set("r", self.position.r)
     storage:set("colour", self._colour)
     storage:set("internalEdgeColour", self._internalEdgeColour)
-    storage:set("externalEdgeColour", self._externalEdgeColour)
+    --Serializing these causes some minor issues and doesn't serve a purpose anyway
+    --storage:set("externalEdgeColour", self._externalEdgeColour)
     return storage
 end
 
