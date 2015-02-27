@@ -7,7 +7,6 @@ local function setupBackground()
     skyplane.properties.tiling = 500
     skyplane.properties:touch()
     entity:addComponent(skyplane)
-	microbe_skyplane=skyplane
     -- Create floating arrow entity
     entity = Entity("directionarrow")
     local sceneNode = OgreSceneNodeComponent()

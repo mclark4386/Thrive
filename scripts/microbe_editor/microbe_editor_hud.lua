@@ -103,6 +103,7 @@ function setupRealEditor()
         else
             button:enable()
         end
+	end
     self.finishButton:enable()
     self.helpPanel:setText("Welcome to the Microbe Editor!\nHere you have a chance to mutate your species, getting better adapted to your surroundings.\nEvolution happens progressively, so we limit you to a budget of 100 'Mutation Points' every time you evolve.\nModify your species by attaching organelles, selected on the right, to your cell.\nClick on the top-left to change the name of your species.")
     self.helpPanel:show()
@@ -180,11 +181,7 @@ function MicrobeEditorHudSystem:update(renderTime, logicTime)
         end
     elseif keyCombo(kmp.gotostage) then
         playClicked()
-<<<<<<< HEAD
-    elseif Engine.keyboard:wasKeyPressed(Keyboard.KC_N) then
-=======
     elseif keyCombo(kmp.rename) then
->>>>>>> remotes/origin/HEAD
         self:updateMicrobeName()
     end
 
