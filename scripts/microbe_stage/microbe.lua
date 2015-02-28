@@ -18,7 +18,8 @@ RELATIVE_VELOCITY_TO_BUMP_SOUND = 6
 INITIAL_EMISSION_RADIUS = 0.5
 ENGULFING_MOVEMENT_DIVISION = 3
 ENGULFED_MOVEMENT_DIVISION = 8
-ENGULFING_ATP_COST_SECOND = 1
+ENGULFING_ATP_COST_SECOND = 1.5
+ENGULF_HP_RATIO_REQ = 1.5 
 
 function MicrobeComponent:__init(isPlayerMicrobe)
     Component.__init(self)
@@ -1015,26 +1016,22 @@ function MicrobeSystem:update(renderTime, logicTime)
                     soundComponent:playSound("microbe-collision")
                 end
                 -- Engulf initiation
-                if microbe1Comp.engulfMode and microbe1Comp.maxHitpoints > microbe2Comp.maxHitpoints 
-                           and not microbe2Comp.wasBeingEngulfed and not microbe1Comp.isCurrentlyEngulfing then
-                    microbe2Comp.movementFactor = microbe2Comp.movementFactor / ENGULFED_MOVEMENT_DIVISION
-                    microbe1Comp.isCurrentlyEngulfing = true
-                    microbe2Comp.isBeingEngulfed = true
-                    microbe2Comp.wasBeingEngulfed = true
-                    microbe2Comp.hostileEngulfer = Microbe(entity1)
-                    body1:disableCollisionsWith(collision.entityId2)     
-                end
-                if microbe2Comp.engulfMode and microbe2Comp.maxHitpoints > microbe1Comp.maxHitpoints
-                           and not microbe1Comp.wasBeingEngulfed and not microbe2Comp.isCurrentlyEngulfing then
-                    microbe1Comp.movementFactor = microbe1Comp.movementFactor / ENGULFED_MOVEMENT_DIVISION
-                    microbe2Comp.isCurrentlyEngulfing = true
-                    microbe1Comp.isBeingEngulfed = true
-                    microbe1Comp.wasBeingEngulfed = true
-                    microbe1Comp.hostileEngulfer = Microbe(entity2)
-                    body2:disableCollisionsWith(collision.entityId1)
-                end
+                checkEngulfment(microbe1Comp, microbe2Comp, body1, entity1, entity2)
+                checkEngulfment(microbe2Comp, microbe1Comp, body2, entity2, entity1)
             end
         end
     end
     self.microbeCollisions:clearCollisions()
+end
+
+function checkEngulfment(microbe1Comp, microbe2Comp, body, entity1, entity2)
+    if microbe1Comp.engulfMode and microbe1Comp.maxHitpoints > ENGULF_HP_RATIO_REQ*microbe2Comp.maxHitpoints 
+                   and not microbe2Comp.wasBeingEngulfed and not microbe1Comp.isCurrentlyEngulfing then
+        microbe2Comp.movementFactor = microbe2Comp.movementFactor / ENGULFED_MOVEMENT_DIVISION
+        microbe1Comp.isCurrentlyEngulfing = true
+        microbe2Comp.isBeingEngulfed = true
+        microbe2Comp.wasBeingEngulfed = true
+        microbe2Comp.hostileEngulfer = Microbe(entity1)
+        body:disableCollisionsWith(entity2.id)     
+    end
 end
