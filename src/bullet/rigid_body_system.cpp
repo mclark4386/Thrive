@@ -446,11 +446,11 @@ RigidBodyInputSystem::update(int, int logicTime) {
             btRigidBody* otherbody =  m_impl->m_bodies[rigidBodyComponent->m_entityToNoCollide].get();
             //If both entities exist and we aren't activating a collision with the same entity again
             if (otherbody ) {
-                btTypedConstraint* constraint = std::make_unique<DummyConstraint>(otherbody, body);
-                m_impl->m_activeConstraints.insert( std::pair<EntityId, std::unique_ptr<btTypedConstraint>>(value.first, std::move(constraint)));
-                m_impl->m_activeConstraintOtherEntity.insert( std::pair<EntityId,EntityId>(value.first, rigidBodyComponent->m_entityToNoCollide));
+                std::unique_ptr<btTypedConstraint> constraint = make_unique<DummyConstraint>(otherbody, body);
                 otherbody->addConstraintRef(constraint.get());
                 body->addConstraintRef(constraint.get());
+                m_impl->m_activeConstraints.insert( std::pair<EntityId, std::unique_ptr<btTypedConstraint>>(value.first, std::move(constraint)));
+                m_impl->m_activeConstraintOtherEntity.insert( std::pair<EntityId,EntityId>(value.first, rigidBodyComponent->m_entityToNoCollide));
             }
             rigidBodyComponent->m_entityToNoCollide  = NULL_ENTITY;
         }
