@@ -340,7 +340,7 @@ local function createSpawnSystem()
    spawnSystem:addSpawnType(microbeToxinPredator, 1/7000, 40)
     spawnSystem:addSpawnType(microbeNoper, 1/6000, 40)
     spawnSystem:addSpawnType(microbeAlgae, 1/3000, 40)
-    spawnSystem:addSpawnType(microbeGlutony, 1/17000, 40)
+    spawnSystem:addSpawnType(microbeGlutony, 1/18000, 40)
     spawnSystem:addSpawnType(toxinOrganelleSpawnFunction, 1/17000, 30)
     return spawnSystem
 end

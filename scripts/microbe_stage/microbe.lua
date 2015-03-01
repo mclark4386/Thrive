@@ -829,8 +829,8 @@ function Microbe:update(logicTime)
         if self.microbe.engulfMode then
             -- Drain atp and if we run out then disable engulfmode
             local cost = ENGULFING_ATP_COST_SECOND/1000*logicTime
-            if self:takeCompound(CompoundRegistry.getCompoundId("atp"), -cost) < cost then
-               -- self:toggleEngulfMode()
+            if self:takeCompound(CompoundRegistry.getCompoundId("atp"), cost) < cost then
+                self:toggleEngulfMode()
             end
         end
         if self.microbe.isBeingEngulfed then

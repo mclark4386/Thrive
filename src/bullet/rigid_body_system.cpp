@@ -219,7 +219,7 @@ struct RigidBodyInputSystem::Implementation {
     btDiscreteDynamicsWorld* m_world = nullptr;
 
     //Map links the dominating entity to a shared constraint
-    std::map<EntityId, btTypedConstraint*> m_activeConstraints;
+    std::map<EntityId, std::unique_ptr<btTypedConstraint>> m_activeConstraints;
     std::map<EntityId, EntityId> m_activeConstraintOtherEntity;
 };
 
@@ -292,9 +292,8 @@ RigidBodyInputSystem::update(int, int logicTime) {
         auto it = m_impl->m_activeConstraints.find(entityId);
         if (it != m_impl->m_activeConstraints.end()) {
             btRigidBody* otherbody =  m_impl->m_bodies[m_impl->m_activeConstraintOtherEntity[entityId]].get();
-            body->removeConstraintRef(it->second);
-            otherbody->removeConstraintRef(it->second);
-            delete it->second;
+            body->removeConstraintRef(it->second.get());
+            otherbody->removeConstraintRef(it->second.get());
             m_impl->m_activeConstraints.erase(it);
             m_impl->m_activeConstraintOtherEntity.erase(entityId);
         }
@@ -432,12 +431,11 @@ RigidBodyInputSystem::update(int, int logicTime) {
             //As implemented right now there can be only one nocollideentity
             if (m_impl->m_activeConstraints.find(value.first) != m_impl->m_activeConstraints.end()) {
                 btRigidBody* otherbody =  m_impl->m_bodies[m_impl->m_activeConstraintOtherEntity[value.first]].get();
-                body->removeConstraintRef(m_impl->m_activeConstraints[value.first]);
+                body->removeConstraintRef(m_impl->m_activeConstraints[value.first].get());
 
                 if (otherbody) {
-                    otherbody->removeConstraintRef(m_impl->m_activeConstraints[value.first]);
+                    otherbody->removeConstraintRef(m_impl->m_activeConstraints[value.first].get());
                 }
-                delete m_impl->m_activeConstraints[value.first];
                 m_impl->m_activeConstraints.erase(value.first);
                 m_impl->m_activeConstraintOtherEntity.erase(value.first);
             }
@@ -448,11 +446,11 @@ RigidBodyInputSystem::update(int, int logicTime) {
             btRigidBody* otherbody =  m_impl->m_bodies[rigidBodyComponent->m_entityToNoCollide].get();
             //If both entities exist and we aren't activating a collision with the same entity again
             if (otherbody ) {
-                btTypedConstraint* constraint = new DummyConstraint(otherbody, body);
-                m_impl->m_activeConstraints.insert( std::pair<EntityId, btTypedConstraint*>(value.first, constraint));
+                btTypedConstraint* constraint = std::make_unique<DummyConstraint>(otherbody, body);
+                m_impl->m_activeConstraints.insert( std::pair<EntityId, std::unique_ptr<btTypedConstraint>>(value.first, std::move(constraint)));
                 m_impl->m_activeConstraintOtherEntity.insert( std::pair<EntityId,EntityId>(value.first, rigidBodyComponent->m_entityToNoCollide));
-                otherbody->addConstraintRef(constraint);
-                body->addConstraintRef(constraint);
+                otherbody->addConstraintRef(constraint.get());
+                body->addConstraintRef(constraint.get());
             }
             rigidBodyComponent->m_entityToNoCollide  = NULL_ENTITY;
         }
